@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:codex/services/preferences_service.dart';
+import 'package:codex/widgets/split_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -20,6 +22,7 @@ class ProjectViewerScreen extends StatefulWidget {
 
 class _ProjectViewerScreenState extends State<ProjectViewerScreen> {
   final FileService _fileService = FileService();
+  final PreferencesService _prefsService = PreferencesService();
 
   FileTreeNode? _rootNode;
   FileTreeNode? _selectedNode;
@@ -29,10 +32,24 @@ class _ProjectViewerScreenState extends State<ProjectViewerScreen> {
   bool _isLoadingFile = false;
   String? _errorMessage;
 
+  double _sidebarWidth = 300;
+
   @override
   void initState() {
     super.initState();
+    _initPreferences();
     _loadFileTree();
+  }
+
+  Future<void> _initPreferences() async {
+    await _prefsService.init();
+    setState(() {
+      _sidebarWidth = _prefsService.getSidebarWidth(300);
+    });
+  }
+
+  void _onSidebarResized(double width) {
+    _prefsService.setSidebarWidth(width);
   }
 
   /// Load the file tree from the directory
@@ -289,76 +306,69 @@ class _ProjectViewerScreenState extends State<ProjectViewerScreen> {
       );
     }
 
-    // Success state - show file tree and content
-    return Row(
-      children: [
-        // File tree sidebar
-        Container(
-          width: 300,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            border: Border(
-              right: BorderSide(
-                color: Theme.of(
-                  context,
-                ).colorScheme.outline.withValues(alpha: .2),
+    // Success state - show file tree and content in split view
+    return SplitView(
+      initialLeftWidth: _sidebarWidth,
+      minLeftWidth: 200,
+      maxLeftWidth: 600,
+      onDividerDragged: _onSidebarResized,
+      left: _buildSidebar(),
+      right: _buildContentArea(),
+    );
+  }
+
+  Widget _buildSidebar() {
+    return Container(
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
+      child: Column(
+        children: [
+          // Sidebar header
+          Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outline.withValues(alpha: .2),
+                ),
               ),
             ),
-          ),
-          child: Column(
-            children: [
-              // Sidebar header
-              Container(
-                height: 40,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outline.withValues(alpha: .2),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.folder_outlined,
+                  size: 18,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: .7),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Files',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.folder_outlined,
-                      size: 18,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: .7),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Files',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Tree view
-              Expanded(
-                child: _rootNode != null
-                    ? FileTree(
-                        rootNode: _rootNode!,
-                        onNodeSelected: _selectNode,
-                        onNodeExpanded: _toggleExpand,
-                      )
-                    : const Center(child: Text('No files')),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
-        // Content area
-        Expanded(child: _buildContentArea()),
-      ],
+          // Tree view
+          Expanded(
+            child: _rootNode != null
+                ? FileTree(
+                    rootNode: _rootNode!,
+                    onNodeSelected: _selectNode,
+                    onNodeExpanded: _toggleExpand,
+                  )
+                : const Center(child: Text('No files')),
+          ),
+        ],
+      ),
     );
   }
 

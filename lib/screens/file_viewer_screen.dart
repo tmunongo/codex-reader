@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../services/file_service.dart';
 import '../widgets/markdown_viewer.dart';
 
-/// Screen for viewing a single markdown file
 class FileViewerScreen extends StatefulWidget {
   final File file;
 
@@ -28,7 +27,6 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     _loadFile();
   }
 
-  /// Load and read the file content
   Future<void> _loadFile() async {
     setState(() {
       _isLoading = true;
@@ -36,7 +34,6 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     });
 
     try {
-      // Validate file
       final isValid = await _fileService.validateMarkdownFile(widget.file);
       if (!isValid) {
         throw FileServiceException(
@@ -44,7 +41,6 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
         );
       }
 
-      // Read content
       final content = await _fileService.readFileContent(widget.file);
 
       setState(() {
@@ -64,7 +60,6 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     }
   }
 
-  /// Reload the file (useful if file changes externally)
   Future<void> _reloadFile() async {
     await _loadFile();
     if (mounted && _errorMessage == null) {
@@ -99,7 +94,6 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
           ],
         ),
         actions: [
-          // Reload button
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Reload file',
@@ -120,6 +114,47 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       ),
 
       body: _buildBody(),
+
+      bottomNavigationBar: _errorMessage == null && _content != null
+          ? Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: .2),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.insert_drive_file,
+                    size: 14,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: .6),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      filePath,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: .6),
+                        fontFamily: 'monospace',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null,
     );
   }
 
@@ -138,7 +173,6 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       );
     }
 
-    // Error state
     if (_errorMessage != null) {
       return Center(
         child: Padding(
@@ -189,7 +223,6 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       );
     }
 
-    // Success state - show markdown content
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: MarkdownViewer(data: _content ?? ''),
