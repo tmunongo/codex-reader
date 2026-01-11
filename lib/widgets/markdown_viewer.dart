@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/github.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:markdown/markdown.dart' as md;
 
-/// A widget that renders markdown content with syntax highlighting
-/// and theme-aware styling.
 class MarkdownViewer extends StatelessWidget {
   final String data;
   final bool selectable;
@@ -19,7 +17,6 @@ class MarkdownViewer extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Choose syntax highlighting theme based on app theme
     final codeTheme = isDark ? monokaiSublimeTheme : githubTheme;
 
     return Markdown(
