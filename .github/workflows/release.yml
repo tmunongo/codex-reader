@@ -27,7 +27,7 @@ jobs:
                   7z a ../../../../../codex-windows-x64.zip *
 
             - name: Upload artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: windows-build
                   path: codex-windows-x64.zip
@@ -58,7 +58,7 @@ jobs:
                   tar -czvf ../../../../../codex-linux-x64.tar.gz *
 
             - name: Upload artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: linux-build
                   path: codex-linux-x64.tar.gz
