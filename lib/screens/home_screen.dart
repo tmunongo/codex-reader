@@ -1,3 +1,4 @@
+import 'package:codex/screens/markdown_test_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -56,7 +57,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.description_outlined,
               size: 120,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: .3),
             ),
             const SizedBox(height: 24),
             Text(
@@ -70,7 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               'Read the source.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: .6),
               ),
             ),
             const SizedBox(height: 48),
@@ -79,6 +84,19 @@ class _HomeScreenState extends State<HomeScreen> {
             Wrap(
               spacing: 16,
               children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // Navigate to test screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MarkdownTestScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.science_outlined),
+                  label: const Text('Test Renderer'),
+                ),
                 ElevatedButton.icon(
                   onPressed: () {
                     // TODO: M3 - Open file
