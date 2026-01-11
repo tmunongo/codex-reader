@@ -30,7 +30,7 @@ InstallDir "$LOCALAPPDATA\${APP_NAME}"
 
 !define MUI_ABORTWARNING
 !define MUI_UNABORTWARNING
-!define MUI_ICON "..\build\windows\x64\runner\Release\app.ico"
+!define MUI_ICON "..\build\windows\x64\runner\Release\app_icon.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
