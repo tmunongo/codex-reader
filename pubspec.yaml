@@ -38,6 +38,8 @@ dependencies:
   flutter_highlight: ^0.7.0
   highlight: ^0.7.0
   google_fonts: ^7.0.0
+  file_picker: ^10.3.8
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:

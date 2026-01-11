@@ -1,4 +1,5 @@
-import 'package:codex/screens/markdown_test_screen.dart';
+import 'package:codex/screens/file_viewer_screen.dart';
+import 'package:codex/services/file_service.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -9,6 +10,45 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final FileService _fileService = FileService();
+  bool _isPickingFile = false;
+
+  /// Open file picker and navigate to viewer
+  Future<void> _openFile() async {
+    if (_isPickingFile) return;
+
+    setState(() {
+      _isPickingFile = true;
+    });
+
+    try {
+      final file = await _fileService.pickMarkdownFile();
+
+      if (file != null && mounted) {
+        // Navigate to file viewer
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => FileViewerScreen(file: file)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening file: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingFile = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,27 +125,15 @@ class _HomeScreenState extends State<HomeScreen> {
               spacing: 16,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
-                    // Navigate to test screen
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MarkdownTestScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.science_outlined),
-                  label: const Text('Test Renderer'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: M3 - Open file
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File picker coming in M3')),
-                    );
-                  },
-                  icon: const Icon(Icons.insert_drive_file_outlined),
-                  label: const Text('Open File'),
+                  onPressed: _isPickingFile ? null : _openFile,
+                  icon: _isPickingFile
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.insert_drive_file_outlined),
+                  label: Text(_isPickingFile ? 'Opening...' : 'Open File'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
