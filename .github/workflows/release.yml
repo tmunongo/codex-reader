@@ -26,7 +26,7 @@ jobs:
 
             - name: Run NSIS installer script
               run: |
-                  makensis .\installer\CodexInstaller.nsi
+                  makensis .\windows\installer.nsi
               shell: cmd
 
             - name: Create ZIP
@@ -74,7 +74,7 @@ jobs:
 
             - name: Build AppImage
               run: |
-                  appimage-builder --recipe appImage.yml
+                  appimage-builder --recipe ./linux/AppImageBuilder.yml
 
             - name: Create tarball
               run: |

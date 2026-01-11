@@ -1,0 +1,38 @@
+version: 1
+
+AppDir:
+  path: ./AppDir
+
+  app_info:
+    id: com.codexreader.app
+    name: Codex
+    icon: codex
+    version: 1.0.0
+    exec: usr/bin/codex
+    exec_args: $@
+
+  apt:
+    arch: amd64
+    sources:
+      - sourceline: "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse"
+
+    include:
+      - libgtk-3-0
+      - libblkid1
+      - liblzma5
+
+  files:
+    exclude:
+      - usr/share/man
+      - usr/share/doc/*/README.*
+      - usr/share/doc/*/changelog.*
+      - usr/share/doc/*/NEWS.*
+      - usr/share/doc/*/TODO.*
+
+  runtime:
+    env:
+      APPDIR_LIBRARY_PATH: $APPDIR/usr/lib/x86_64-linux-gnu
+
+AppImage:
+  arch: x86_64
+  update-information: guess
