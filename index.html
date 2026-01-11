@@ -3,138 +3,576 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Codex — A Lightweight Markdown Reader</title>
+    <title>Codex — Read the source.</title>
+    <meta
+      name="description"
+      content="A calm, customizable Markdown reader for researchers and writers. Built with Flutter for Windows and Linux."
+    />
     <style>
-      body {
+      :root {
+        --primary: #6c3fdb;
+        --accent: #00d9ff;
+        --dark: #0a0a0f;
+        --surface: #1a1a24;
+        --text: #e8e8f0;
+        --text-secondary: #9898a8;
+        --border: #2a2a3a;
+      }
+
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           sans-serif;
-        background: #fdfdfd;
-        color: #222;
-        line-height: 1.6;
+        background: var(--dark);
+        color: var(--text);
+        line-height: 1.7;
+        overflow-x: hidden;
       }
+
+      /* Header Section */
       header {
-        padding: 3rem 1rem;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         text-align: center;
+        padding: 2rem;
+        position: relative;
+        background: linear-gradient(135deg, var(--dark) 0%, #0f0f1a 100%);
       }
-      h1 {
-        font-size: 3rem;
-        letter-spacing: 0.02em;
-        margin-bottom: 0.25rem;
+
+      header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(108, 63, 219, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 50%,
+            rgba(0, 217, 255, 0.1) 0%,
+            transparent 50%
+          );
+        pointer-events: none;
       }
-      h2 {
-        text-align: center;
-        font-weight: 400;
-        color: #555;
-        margin-top: 0;
+
+      .hero {
+        position: relative;
+        z-index: 1;
       }
-      .section {
-        max-width: 720px;
-        margin: 3rem auto;
-        padding: 0 1rem;
+
+      .logo {
+        font-size: 5rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: glow 3s ease-in-out infinite;
       }
+
+      @keyframes glow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 20px rgba(108, 63, 219, 0.3));
+        }
+        50% {
+          filter: drop-shadow(0 0 30px rgba(0, 217, 255, 0.4));
+        }
+      }
+
+      .tagline {
+        font-size: 1.5rem;
+        color: var(--accent);
+        font-weight: 300;
+        margin-bottom: 2rem;
+        font-family: "Courier New", monospace;
+      }
+
+      .tagline::before {
+        content: "> ";
+        color: var(--primary);
+      }
+
+      .hero-description {
+        max-width: 600px;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin: 0 auto 3rem;
+      }
+
+      /* Download Buttons */
       .downloads {
         display: flex;
-        justify-content: center;
         gap: 1rem;
-        margin-top: 2rem;
+        justify-content: center;
+        flex-wrap: wrap;
       }
+
       .button {
-        display: inline-block;
-        padding: 0.75rem 1.5rem;
-        background: #222;
-        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem 2rem;
+        background: var(--surface);
+        color: var(--text);
+        border: 2px solid var(--border);
         border-radius: 8px;
         text-decoration: none;
         font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
       }
+
+      .button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 217, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .button:hover::before {
+        left: 100%;
+      }
+
       .button:hover {
-        background: #444;
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 217, 255, 0.2);
       }
+
+      .button.primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+      }
+
+      .button.primary:hover {
+        background: #7d4ff0;
+        border-color: #7d4ff0;
+        box-shadow: 0 10px 30px rgba(108, 63, 219, 0.3);
+      }
+
+      /* Sections */
+      .section {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 5rem 2rem;
+      }
+
+      .section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--text);
+        position: relative;
+        display: inline-block;
+      }
+
+      .section h2::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+      }
+
+      .section h3 {
+        font-size: 1.8rem;
+        margin: 3rem 0 1rem;
+        color: var(--accent);
+      }
+
+      /* Features Grid */
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+      }
+
+      .feature {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+      }
+
+      .feature:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(108, 63, 219, 0.2);
+      }
+
+      .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .feature h4 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+      }
+
+      .feature p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+
+      /* Theme Preview */
+      .theme-preview {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 2rem 0;
+      }
+
+      .color-palette {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+
+      .color-swatch {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        border: 2px solid var(--border);
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .color-swatch:hover {
+        transform: scale(1.1);
+      }
+
+      .color-swatch[data-color="primary"] {
+        background: var(--primary);
+      }
+      .color-swatch[data-color="accent"] {
+        background: var(--accent);
+      }
+      .color-swatch[data-color="dark"] {
+        background: var(--dark);
+      }
+      .color-swatch[data-color="surface"] {
+        background: var(--surface);
+        border-color: var(--accent);
+      }
+
+      /* Code Block */
+      pre {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.5rem;
+        overflow-x: auto;
+        font-family: "Courier New", monospace;
+        font-size: 0.9rem;
+        color: var(--accent);
+      }
+
+      /* Footer */
       footer {
         text-align: center;
-        padding: 2rem;
-        color: #777;
-        font-size: 0.9rem;
+        padding: 3rem 2rem;
+        color: var(--text-secondary);
+        border-top: 1px solid var(--border);
+        margin-top: 5rem;
+      }
+
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* Support Section */
+      .support {
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 3rem;
+        text-align: center;
+        margin: 3rem 0;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .logo {
+          font-size: 3rem;
+        }
+        .tagline {
+          font-size: 1.2rem;
+        }
+        .section h2 {
+          font-size: 2rem;
+        }
+        .features {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Scan line effect */
+      @keyframes scan {
+        0% {
+          transform: translateY(-100%);
+        }
+        100% {
+          transform: translateY(100vh);
+        }
+      }
+
+      .scanline {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(transparent, var(--accent), transparent);
+        opacity: 0.1;
+        pointer-events: none;
+        animation: scan 8s linear infinite;
+        z-index: 9999;
       }
     </style>
   </head>
   <body>
+    <div class="scanline"></div>
+
     <header>
-      <h1>Codex</h1>
-      <h2>A calm, customizable Markdown reader.</h2>
+      <div class="hero">
+        <h1 class="logo">CODEX</h1>
+        <p class="tagline">Read the source.</p>
+        <p class="hero-description">
+          A calm, customizable Markdown reader for researchers and writers who
+          need a quiet space to explore their work.
+        </p>
+        <div class="downloads">
+          <a
+            class="button primary"
+            href="https://github.com/tmunongo/codex-reader/releases/latest"
+          >
+            <span>⬇</span> Download for Windows
+          </a>
+          <a
+            class="button"
+            href="https://github.com/tmunongo/codex-reader/releases/latest"
+          >
+            <span>⬇</span> Download for Linux
+          </a>
+          <a class="button" href="https://github.com/tmunongo/codex-reader">
+            <span>⭐</span> View on GitHub
+          </a>
+        </div>
+      </div>
     </header>
 
     <div class="section">
-      <h3>Why Codex Exists</h3>
+      <h2>Why Codex?</h2>
       <p>
-        Codex was created for readers who work heavily with Markdown-based
-        research. AI deep-research tools produce long Markdown documents.
-        Writers collect notes, excerpts, references, and exported summaries.
-        Traditional editors can display Markdown well, but they always feel like
-        editors first: panes, terminals, and the weight of features you don’t
-        need when you simply want to read.
+        AI deep-research tools produce long Markdown documents. Writers collect
+        notes, excerpts, references, and exported summaries. Traditional editors
+        display Markdown well, but they always feel like editors first: panes,
+        terminals, and the weight of features you don't need when you simply
+        want to <em>read</em>.
       </p>
       <p>
         Codex focuses on clarity and comfort. Open a single file or an entire
         folder of Markdown documents. Navigate them like a library. Switch
         themes. Read without the noise of an editor surrounding your work.
       </p>
+
+      <div class="theme-preview">
+        <h3>Designed for Reading</h3>
+        <p>
+          Codex uses a cyberpunk-inspired color palette that's easy on the eyes
+          during long reading sessions.
+        </p>
+        <div class="color-palette">
+          <div
+            class="color-swatch"
+            data-color="primary"
+            title="Primary: #6C3FDB"
+          ></div>
+          <div
+            class="color-swatch"
+            data-color="accent"
+            title="Accent: #00D9FF"
+          ></div>
+          <div
+            class="color-swatch"
+            data-color="dark"
+            title="Background: #0A0A0F"
+          ></div>
+          <div
+            class="color-swatch"
+            data-color="surface"
+            title="Surface: #1A1A24"
+          ></div>
+        </div>
+      </div>
     </div>
 
     <div class="section">
-      <h3>Features</h3>
-      <ul>
-        <li>Open individual Markdown files or whole directories.</li>
-        <li>Clean two-pane layout for effortless navigation.</li>
-        <li>High-quality Markdown rendering for long-form reading.</li>
-        <li>Built-in light and dark themes.</li>
-        <li>
-          Load custom theme files to personalize your reading environment.
-        </li>
-        <li>Lightweight and fully offline.</li>
+      <h2>Features</h2>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">📄</div>
+          <h4>Single Files or Projects</h4>
+          <p>
+            Open individual Markdown files or entire directories as projects.
+          </p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🌲</div>
+          <h4>Clean Navigation</h4>
+          <p>
+            Two-pane layout with collapsible file tree for effortless browsing.
+          </p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎨</div>
+          <h4>Custom Themes</h4>
+          <p>
+            Built-in light and dark themes, plus support for custom JSON theme
+            files.
+          </p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <h4>High-Quality Rendering</h4>
+          <p>
+            Syntax highlighting, tables, task lists, and all GitHub-flavored
+            Markdown.
+          </p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔒</div>
+          <h4>Fully Offline</h4>
+          <p>
+            Lightweight, native desktop app. No cloud, no tracking, no internet
+            required.
+          </p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⌨️</div>
+          <h4>Keyboard Shortcuts</h4>
+          <p>Navigate, search, and switch themes with keyboard shortcuts.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Getting Started</h2>
+      <h3>Installation</h3>
+      <p>
+        Download the appropriate installer for your platform and run it. Codex
+        is portable and can be run without installation on both Windows and
+        Linux.
+      </p>
+
+      <h3>Creating Custom Themes</h3>
+      <p>
+        Codex themes are simple JSON files. Place them in
+        <code>~/.codex/themes/</code> to load them in the app.
+      </p>
+      <pre>
+{
+  "name": "My Theme",
+  "version": "1.0.0",
+  "isDark": true,
+  "colors": {
+    "primary": "#6C3FDB",
+    "accent": "#00D9FF",
+    "background": "#0A0A0F",
+    ...
+  }
+}</pre
+      >
+
+      <h3>Keyboard Shortcuts</h3>
+      <ul style="color: var(--text-secondary); margin-top: 1rem">
+        <li><code>Ctrl/Cmd + O</code> — Open file</li>
+        <li><code>Ctrl/Cmd + Shift + O</code> — Open folder</li>
+        <li><code>Ctrl/Cmd + R</code> — Reload</li>
+        <li><code>Ctrl/Cmd + T</code> — Toggle theme</li>
       </ul>
     </div>
 
     <div class="section">
-      <h3>Download Codex</h3>
-      <p>Choose a version for your platform:</p>
-      <div class="downloads">
-        <a
-          class="button"
-          href="https://github.com/tmunongo/codex-reader/releases/latest"
-          >Windows</a
+      <div class="support">
+        <h2 style="margin-bottom: 1.5rem">Support Codex</h2>
+        <p
+          style="
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+          "
         >
-        <a
-          class="button"
-          href="https://github.com/tmunongo/codex-reader/releases/latest"
-          >Linux</a
-        >
+          Codex is a personal, fully offline Markdown reader built with care for
+          writers and researchers who want a quieter space to explore their
+          work. If Codex has helped you, consider supporting its development.
+        </p>
+        <script
+          type="text/javascript"
+          src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+          data-name="bmc-button"
+          data-slug="ta1da"
+          data-color="#6C3FDB"
+          data-emoji="☕"
+          data-font="Poppins"
+          data-text="Buy me a coffee"
+          data-outline-color="#00D9FF"
+          data-font-color="#ffffff"
+          data-coffee-color="#FFDD00"
+        ></script>
       </div>
     </div>
 
-    <div class="section" style="text-align: center; margin-top: 4rem">
-      <h3>Support Codex</h3>
+    <footer>
       <p>
-        Codex is a personal, fully offline Markdown reader built with care for
-        writers and researchers who want a quieter space to explore their work.
-        If Codex has helped you, consider supporting its development.
+        Codex is an open-source project.
+        <a href="https://github.com/tmunongo/codex-reader/blob/main/LICENSE"
+          >MIT License</a
+        >.
       </p>
-      <script
-        type="text/javascript"
-        src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-        data-name="bmc-button"
-        data-slug="ta1da"
-        data-color="#FF5F5F"
-        data-emoji="☕"
-        data-font="Poppins"
-        data-text="Buy me a coffee"
-        data-outline-color="#000000"
-        data-font-color="#ffffff"
-        data-coffee-color="#FFDD00"
-      ></script>
-    </div>
-    <footer>Codex is an open-source project. MIT License.</footer>
+      <p style="margin-top: 0.5rem">
+        Built with Flutter · Designed for readers · Made with ☕
+      </p>
+    </footer>
   </body>
 </html>
