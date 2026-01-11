@@ -14,7 +14,7 @@ AppDir:
   apt:
     arch: amd64
     sources:
-      - sourceline: "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse"
+      - sourceline: "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse"
 
     include:
       - libgtk-3-0

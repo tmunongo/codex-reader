@@ -24,6 +24,9 @@ jobs:
             - name: Install NSIS
               run: choco install nsis -y
 
+            - name: Install NSIS
+              run: choco install nsis -y
+
             - name: Run NSIS installer script
               run: |
                   makensis .\windows\installer.nsi
