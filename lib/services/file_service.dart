@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 
-/// Service for handling file operations
+import '../models/file_tree_node.dart';
+
 class FileService {
-  /// Supported markdown file extensions
   static const List<String> markdownExtensions = [
     'md',
     'markdown',
@@ -15,8 +15,103 @@ class FileService {
     'txt',
   ];
 
-  /// Opens a file picker dialog and returns the selected markdown file
-  /// Returns null if user cancels or no file is selected
+  Future<Directory?> pickDirectory() async {
+    try {
+      final result = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Open Folder as Project',
+      );
+
+      if (result != null) {
+        return Directory(result);
+      }
+
+      return null;
+    } catch (e) {
+      throw FileServiceException('Failed to pick directory: $e');
+    }
+  }
+
+  Future<FileTreeNode> buildFileTree(
+    Directory directory, {
+    int maxDepth = -1,
+    int currentDepth = 0,
+  }) async {
+    try {
+      final rootNode = FileTreeNode.fromDirectory(directory);
+      final children = <FileTreeNode>[];
+
+      if (maxDepth != -1 && currentDepth >= maxDepth) {
+        return rootNode;
+      }
+
+      final entities = await directory.list().toList();
+
+      for (final entity in entities) {
+        final basename = path.basename(entity.path);
+        if (basename.startsWith('.')) continue;
+
+        if (entity is File) {
+          final node = FileTreeNode.fromFile(entity);
+          if (node.isMarkdownFile) {
+            node.parent = rootNode;
+            children.add(node);
+          }
+        } else if (entity is Directory) {
+          final subdirNode = await buildFileTree(
+            entity,
+            maxDepth: maxDepth,
+            currentDepth: currentDepth + 1,
+          );
+
+          if (subdirNode.markdownFileCount > 0) {
+            subdirNode.parent = rootNode;
+            children.add(subdirNode);
+          }
+        }
+      }
+
+      final nodeWithChildren = FileTreeNode(
+        name: rootNode.name,
+        fullPath: rootNode.fullPath,
+        isDirectory: true,
+        children: children,
+        parent: rootNode.parent,
+        isExpanded: currentDepth == 0,
+      );
+
+      nodeWithChildren.sortChildren();
+
+      return nodeWithChildren;
+    } on FileSystemException catch (e) {
+      throw FileServiceException('Cannot access directory: ${e.message}');
+    } catch (e) {
+      throw FileServiceException('Failed to build file tree: $e');
+    }
+  }
+
+  Future<bool> validateDirectory(Directory directory) async {
+    try {
+      if (!await directory.exists()) {
+        return false;
+      }
+
+      final stat = await directory.stat();
+      if (stat.type != FileSystemEntityType.directory) {
+        return false;
+      }
+
+      await directory.list().first;
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  String getDirectoryName(Directory directory) {
+    return path.basename(directory.path);
+  }
+
   Future<File?> pickMarkdownFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -35,22 +130,17 @@ class FileService {
     }
   }
 
-  /// Reads the content of a file as a UTF-8 string
-  /// Throws FileServiceException if file cannot be read
   Future<String> readFileContent(File file) async {
     try {
-      // Check if file exists
       if (!await file.exists()) {
         throw FileServiceException('File does not exist: ${file.path}');
       }
 
-      // Check if file is readable
       final stat = await file.stat();
       if (stat.type != FileSystemEntityType.file) {
         throw FileServiceException('Path is not a file: ${file.path}');
       }
 
-      // Read file content as UTF-8
       final content = await file.readAsString();
 
       return content;
@@ -61,8 +151,6 @@ class FileService {
     }
   }
 
-  /// Validates if a file is a markdown file
-  /// Checks extension and readability
   Future<bool> validateMarkdownFile(File file) async {
     try {
       // Check extension
@@ -71,7 +159,6 @@ class FileService {
         return false;
       }
 
-      // Check if exists and readable
       if (!await file.exists()) {
         return false;
       }
@@ -87,18 +174,15 @@ class FileService {
     return path.basename(file.path);
   }
 
-  /// Gets the file extension
   String getFileExtension(File file) {
     return path.extension(file.path).replaceFirst('.', '');
   }
 
-  /// Gets the directory path of a file
   String getDirectoryPath(File file) {
     return path.dirname(file.path);
   }
 }
 
-/// Custom exception for file service errors
 class FileServiceException implements Exception {
   final String message;
 

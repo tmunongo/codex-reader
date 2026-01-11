@@ -1,4 +1,5 @@
 import 'package:codex/screens/file_viewer_screen.dart';
+import 'package:codex/screens/project_viewer_screen.dart';
 import 'package:codex/services/file_service.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final FileService _fileService = FileService();
   bool _isPickingFile = false;
+  bool _isPickingFolder = false;
 
   /// Open file picker and navigate to viewer
   Future<void> _openFile() async {
@@ -49,6 +51,43 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _openFolder() async {
+    if (_isPickingFolder) return;
+
+    setState(() {
+      _isPickingFolder = true;
+    });
+
+    try {
+      final directory = await _fileService.pickDirectory();
+
+      if (directory != null && mounted) {
+        // Navigate to project viewer
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProjectViewerScreen(directory: directory),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening folder: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingFolder = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,7 +111,11 @@ class _HomeScreenState extends State<HomeScreen> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
-              // TODO: Implement menu actions
+              if (value == 'open_file') {
+                _openFile();
+              } else if (value == 'open_folder') {
+                _openFolder();
+              }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
@@ -136,16 +179,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: Text(_isPickingFile ? 'Opening...' : 'Open File'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    // TODO: M4 - Open folder
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Folder picker coming in M4'),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.folder_outlined),
-                  label: const Text('Open Folder'),
+                  onPressed: _isPickingFolder ? null : _openFolder,
+                  icon: _isPickingFolder
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.folder_outlined),
+                  label: Text(_isPickingFolder ? 'Opening...' : 'Open Folder'),
                 ),
               ],
             ),
