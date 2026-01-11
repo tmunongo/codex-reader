@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/file_tree_node.dart';
 import '../services/file_service.dart';
+import '../widgets/file_tree.dart';
 import '../widgets/markdown_viewer.dart';
 
 /// Screen for viewing a directory as a project with file tree navigation
@@ -83,9 +85,13 @@ class _ProjectViewerScreenState extends State<ProjectViewerScreen> {
   Future<void> _selectNode(FileTreeNode node) async {
     if (node.isDirectory) return; // Only files can be selected
 
+    // Deselect previous node
+    if (_selectedNode != null && _selectedNode != node) {
+      _rootNode?.deselectAll();
+    }
+
     setState(() {
       _isLoadingFile = true;
-      _selectedNode?.isSelected = false;
       node.isSelected = true;
       _selectedNode = node;
     });
@@ -124,49 +130,96 @@ class _ProjectViewerScreenState extends State<ProjectViewerScreen> {
     });
   }
 
+  /// Expand all directories
+  void _expandAll() {
+    setState(() {
+      _rootNode?.expandAll();
+    });
+  }
+
+  /// Collapse all directories
+  void _collapseAll() {
+    setState(() {
+      _rootNode?.collapseAll();
+      // Re-expand root
+      if (_rootNode != null) {
+        _rootNode!.isExpanded = true;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final projectName = _fileService.getDirectoryName(widget.directory);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(projectName),
-            if (_rootNode != null)
-              Text(
-                '${_rootNode!.markdownFileCount} markdown files',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: .6),
+    return KeyboardListener(
+      focusNode: FocusNode()..requestFocus(),
+      onKeyEvent: (event) {
+        if (event is KeyDownEvent) {
+          // Ctrl/Cmd + R: Reload
+          if (event.logicalKey == LogicalKeyboardKey.keyR &&
+              (HardwareKeyboard.instance.isControlPressed ||
+                  HardwareKeyboard.instance.isMetaPressed)) {
+            _loadFileTree();
+          }
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(projectName),
+              if (_rootNode != null)
+                Text(
+                  '${_rootNode!.markdownFileCount} markdown files',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: .6),
+                  ),
                 ),
-              ),
+            ],
+          ),
+          actions: [
+            // Collapse all
+            IconButton(
+              icon: const Icon(Icons.unfold_less),
+              tooltip: 'Collapse all',
+              onPressed: _rootNode == null ? null : _collapseAll,
+            ),
+
+            // Expand all
+            IconButton(
+              icon: const Icon(Icons.unfold_more),
+              tooltip: 'Expand all',
+              onPressed: _rootNode == null ? null : _expandAll,
+            ),
+
+            // Refresh tree
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Reload project',
+              onPressed: _isLoadingTree ? null : _loadFileTree,
+            ),
+
+            // Theme toggle (placeholder for M11)
+            IconButton(
+              icon: const Icon(Icons.brightness_6),
+              tooltip: 'Toggle theme',
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Theme switching coming in M11'),
+                  ),
+                );
+              },
+            ),
           ],
         ),
-        actions: [
-          // Refresh tree
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Reload project',
-            onPressed: _isLoadingTree ? null : _loadFileTree,
-          ),
 
-          // Theme toggle (placeholder for M11)
-          IconButton(
-            icon: const Icon(Icons.brightness_6),
-            tooltip: 'Toggle theme',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Theme switching coming in M11')),
-              );
-            },
-          ),
-        ],
+        body: _buildBody(),
       ),
-
-      body: _buildBody(),
     );
   }
 
@@ -237,13 +290,13 @@ class _ProjectViewerScreenState extends State<ProjectViewerScreen> {
     }
 
     // Success state - show file tree and content
-    // For now, just show a simple tree list (we'll build proper UI in M5-M6)
     return Row(
       children: [
-        // Temporary file tree list (M5 will replace this with proper tree UI)
+        // File tree sidebar
         Container(
           width: 300,
           decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
             border: Border(
               right: BorderSide(
                 color: Theme.of(
@@ -252,45 +305,60 @@ class _ProjectViewerScreenState extends State<ProjectViewerScreen> {
               ),
             ),
           ),
-          child: _buildSimpleTreeList(),
+          child: Column(
+            children: [
+              // Sidebar header
+              Container(
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withValues(alpha: .2),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.folder_outlined,
+                      size: 18,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: .7),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Files',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Tree view
+              Expanded(
+                child: _rootNode != null
+                    ? FileTree(
+                        rootNode: _rootNode!,
+                        onNodeSelected: _selectNode,
+                        onNodeExpanded: _toggleExpand,
+                      )
+                    : const Center(child: Text('No files')),
+              ),
+            ],
+          ),
         ),
 
         // Content area
         Expanded(child: _buildContentArea()),
       ],
-    );
-  }
-
-  /// Temporary simple tree list (M5 will replace with proper tree widget)
-  Widget _buildSimpleTreeList() {
-    if (_rootNode == null) return const SizedBox.shrink();
-
-    final allFiles = _rootNode!.allMarkdownFiles;
-
-    return ListView.builder(
-      itemCount: allFiles.length,
-      itemBuilder: (context, index) {
-        final node = allFiles[index];
-
-        return ListTile(
-          dense: true,
-          selected: node.isSelected,
-          leading: const Icon(Icons.description, size: 18),
-          title: Text(node.name, style: const TextStyle(fontSize: 13)),
-          subtitle: Text(
-            node.fullPath.replaceFirst(_rootNode!.fullPath, ''),
-            style: TextStyle(
-              fontSize: 11,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: .5),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          onTap: () => _selectNode(node),
-        );
-      },
     );
   }
 
