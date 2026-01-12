@@ -5,6 +5,8 @@ import 'package:codex/screens/file_viewer_screen.dart';
 import 'package:codex/screens/project_viewer_screen.dart';
 import 'package:codex/services/file_service.dart';
 import 'package:codex/services/recents_service.dart';
+import 'package:codex/widgets/about_dialog.dart';
+import 'package:codex/widgets/keyboard_shortcuts.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -130,7 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => FileViewerScreen(file: file)),
+              builder: (context) => FileViewerScreen(file: file),
+            ),
           );
 
           // Reload recents when returning
@@ -229,6 +232,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 _openFolder();
               } else if (value == 'clear_recents') {
                 _clearRecents();
+              } else if (value == 'shortcuts') {
+                showDialog(
+                  context: context,
+                  builder: (context) => const ShortcutsDialog(),
+                );
+              } else if (value == 'about') {
+                showDialog(
+                  context: context,
+                  builder: (context) => const CodexAboutDialog(),
+                );
               }
             },
             itemBuilder: (context) => [
@@ -247,6 +260,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text('Clear Recent Items'),
                 ),
               ],
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'shortcuts',
+                child: Row(
+                  children: [
+                    Icon(Icons.keyboard, size: 18),
+                    SizedBox(width: 8),
+                    Text('Keyboard Shortcuts'),
+                  ],
+                ),
+              ),
               const PopupMenuDivider(),
               const PopupMenuItem(value: 'about', child: Text('About')),
             ],
