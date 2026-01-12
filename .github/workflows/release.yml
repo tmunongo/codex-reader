@@ -1,134 +1,115 @@
 name: Release
 
 on:
-    push:
-        tags:
-            - "v*"
+  push:
+    tags:
+      - "v*"
 
 jobs:
-    build-windows:
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v3
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - name: Install dependencies
+        run: flutter pub get
+      # inno_bundle runs 'flutter build windows' for you
+      - name: Build Windows Installer
+        run: dart run inno_bundle build --release
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            build/windows/installer/*.exe
+            build/windows/x64/runner/Release/
 
-            - uses: subosito/flutter-action@v2
-              with:
-                  channel: "stable"
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Install dependencies
-              run: flutter pub get
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+          sudo apt-get install -y python3-pip
+          sudo pip3 install appimage-builder
+          wget -qO appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+          sudo mv appimagetool /usr/local/bin/
 
-            - name: Build Windows
-              run: flutter build windows --release
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
 
-            - name: Install NSIS
-              run: choco install nsis -y
+      - name: Install dependencies
+        run: flutter pub get
 
-            - name: Add NSIS to PATH
-              run: |
-                  echo "C:\Program Files (x86)\NSIS" >> $env:GITHUB_PATH
-              shell: pwsh
+      - name: Build Linux
+        run: flutter build linux --release
 
-            - name: Run NSIS installer script
-              run: |
-                  makensis .\windows\installer.nsi
-              shell: cmd
+      - name: Prepare AppDir
+        run: |
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/icons
+          cp -r build/linux/x64/release/bundle/* AppDir/usr/bin/
+          cp assets/icon/icon.png AppDir/usr/share/icons/codex.png
 
-            - name: Create ZIP
-              run: |
-                  cd build/windows/x64/runner/Release
-                  7z a ../../../../../codex-windows-x64.zip *
+      - name: Build AppImage
+        run: |
+          appimage-builder --recipe ./linux/AppImageBuilder.yml
 
-            - name: Upload artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: windows-build
-                  path: |
-                      codex-windows-x64.zip
-                      CodexSetup.exe
+      - name: Create tarball
+        run: |
+          cd build/linux/x64/release/bundle
+          tar -czvf ../../../../../codex-linux-x64.tar.gz *
 
-    build-linux:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            codex-linux-x64.tar.gz
+            Codex*.AppImage
 
-            - name: Install dependencies
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
-                  sudo apt-get install -y python3-pip
-                  sudo pip3 install appimage-builder
-                  wget -qO appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-                  chmod +x appimagetool
-                  sudo mv appimagetool /usr/local/bin/
+  release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-            - uses: subosito/flutter-action@v2
-              with:
-                  channel: "stable"
+      - name: Download Windows build
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-build
 
-            - name: Install dependencies
-              run: flutter pub get
+      - name: Download Linux build
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-build
 
-            - name: Build Linux
-              run: flutter build linux --release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            codex-windows-x64.zip
+            CodexSetup.exe
+            codex-linux-x64.tar.gz
+            Codex*.AppImage
+          body: |
+            ## Codex ${{ github.ref_name }}
 
-            - name: Prepare AppDir
-              run: |
-                  mkdir -p AppDir/usr/bin
-                  cp -r build/linux/x64/release/bundle/* AppDir/usr/bin/
+            A calm, customizable Markdown reader for researchers and writers.
 
-            - name: Build AppImage
-              run: |
-                  appimage-builder --recipe ./linux/AppImageBuilder.yml
+            ### Downloads
+            - **Windows portable:** `codex-windows-x64.zip`
+            - **Windows installer:** `CodexSetup.exe`
+            - **Linux portable:** `codex-linux-x64.tar.gz`
+            - **Linux AppImage:** `Codex*.AppImage`
 
-            - name: Create tarball
-              run: |
-                  cd build/linux/x64/release/bundle
-                  tar -czvf ../../../../../codex-linux-x64.tar.gz *
-
-            - name: Upload artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: linux-build
-                  path: |
-                      codex-linux-x64.tar.gz
-                      Codex*.AppImage
-
-    release:
-        needs: [build-windows, build-linux]
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-
-            - name: Download Windows build
-              uses: actions/download-artifact@v3
-              with:
-                  name: windows-build
-
-            - name: Download Linux build
-              uses: actions/download-artifact@v3
-              with:
-                  name: linux-build
-
-            - name: Create Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  files: |
-                      codex-windows-x64.zip
-                      CodexSetup.exe
-                      codex-linux-x64.tar.gz
-                      Codex*.AppImage
-                  body: |
-                      ## Codex ${{ github.ref_name }}
-
-                      A calm, customizable Markdown reader for researchers and writers.
-
-                      ### Downloads
-                      - **Windows portable:** `codex-windows-x64.zip`
-                      - **Windows installer:** `CodexSetup.exe`
-                      - **Linux portable:** `codex-linux-x64.tar.gz`
-                      - **Linux AppImage:** `Codex*.AppImage`
-
-                      See README for more information.
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            See README for more information.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -55,6 +55,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  inno_bundle: ^0.11.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -97,3 +98,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+inno_bundle:
+  name: Codex
+  description: A calm, customizable Markdown reader.
+  publisher: Codex Reader
+  url: https://github.com/tmunongo/codex-reader
+  # The tool will find your exe and DLLs automatically
