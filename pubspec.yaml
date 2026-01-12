@@ -45,6 +45,7 @@ dependencies:
   flutter_markdown_plus: ^1.0.7
   flutter_launcher_icons: ^0.14.4
   url_launcher: ^6.3.2
+  inno_bundle: ^0.11.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -55,7 +56,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  inno_bundle: ^0.11.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -99,6 +99,7 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 inno_bundle:
+  id: "32971e30-ef97-11f0-883c-4345814e7677"
   name: Codex
   description: A calm, customizable Markdown reader.
   publisher: Codex Reader
