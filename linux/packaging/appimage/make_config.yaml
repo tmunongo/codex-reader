@@ -1,0 +1,10 @@
+display_name: Codex Viewer
+
+icon: assets/icon.png
+
+generic_name: Lumen
+
+categories:
+  - Utility
+
+startup_notify: true

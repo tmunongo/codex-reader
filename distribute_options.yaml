@@ -1,0 +1,16 @@
+output: dist/
+releases:
+  - name: production
+    jobs:
+      - name: linux-appimage
+        package:
+          platform: linux
+          target: appimage
+      - name: windows-exe
+        package:
+          platform: windows
+          target: exe
+      # - name: macos-dmg
+      #   package:
+      #     platform: macos
+      #     target: dmg

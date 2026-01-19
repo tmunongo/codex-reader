@@ -1,0 +1,14 @@
+# The value of AppId uniquely identifies this application.
+# Do not use the same AppId value in installers for other applications.
+app_id: 1BC1B960-F91C-4A7F-99C9-F5EEEE27106A
+publisher: Voidline
+publisher_url: https://tmunongo.github.io/codex
+product_name: Codex
+display_name: Codex Viewer
+create_desktop_icon: true
+# See: https://jrsoftware.org/ishelp/index.php?topic=setup_defaultdirname
+# install_dir_name: "D:\\HELLO-WORLD"
+# This path is relative to the root directory of your project; The format of icon file must be ico, can not be png or others
+setup_icon_file: windows\runner\resources\app_icon.ico
+locales:
+  - en
