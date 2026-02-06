@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/file_service.dart';
 import '../widgets/markdown_viewer.dart';
@@ -72,6 +73,21 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     }
   }
 
+  Future<void> _copyToClipboard() async {
+    if (_content == null) return;
+
+    await Clipboard.setData(ClipboardData(text: _content!));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Content copied to clipboard'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final fileName = _fileService.getFileName(widget.file);
@@ -94,6 +110,11 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: 'Copy content',
+            onPressed: _isLoading || _content == null ? null : _copyToClipboard,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Reload file',

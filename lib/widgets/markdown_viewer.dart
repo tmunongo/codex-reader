@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/github.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:highlight/highlight.dart' as hl;
 import 'package:markdown/markdown.dart' as md;
 
 class MarkdownViewer extends StatelessWidget {
@@ -57,9 +57,10 @@ Widget _buildMarkdown(BuildContext context, String data, bool selectable) {
 
   final codeTheme = isDark ? monokaiSublimeTheme : githubTheme;
 
-  return Markdown(
+  Widget markdownWidget = Markdown(
     data: data,
-    selectable: selectable,
+    selectable:
+        false, // Force false to use Text widgets, handled by SelectionArea
 
     extensionSet: md.ExtensionSet(
       md.ExtensionSet.gitHubFlavored.blockSyntaxes,
@@ -173,6 +174,8 @@ Widget _buildMarkdown(BuildContext context, String data, bool selectable) {
     // Custom code block builder for syntax highlighting
     builders: {'code': CodeBlockBuilder(codeTheme: codeTheme)},
   );
+
+  return selectable ? SelectionArea(child: markdownWidget) : markdownWidget;
 }
 
 /// Custom builder for syntax-highlighted code blocks
@@ -189,33 +192,66 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
 
     // If language is specified, use syntax highlighting
     if (language.isNotEmpty && language != 'plaintext') {
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: HighlightView(
-            code,
-            language: language,
-            theme: codeTheme,
-            padding: const EdgeInsets.all(16),
-            textStyle: GoogleFonts.jetBrainsMono(fontSize: 14),
+      try {
+        var result = hl.highlight.parse(code, language: language);
+
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color:
+                codeTheme['root']?.backgroundColor ?? const Color(0xff23241f),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      );
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: SelectableText.rich(
+              TextSpan(
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 14,
+                  color: codeTheme['root']?.color ?? const Color(0xfff8f8f2),
+                ),
+                children: _convert(result.nodes!, codeTheme),
+              ),
+            ),
+          ),
+        );
+      } catch (e) {
+        // Fallback if parsing fails
+        debugPrint('Highlight parsing failed: $e');
+      }
     }
 
     // Fallback to default code rendering
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: codeTheme['root']?.backgroundColor ?? Colors.grey[900],
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SelectableText(
+      child: Text(
         code,
         style: GoogleFonts.jetBrainsMono(fontSize: 14, color: Colors.white),
       ),
     );
+  }
+
+  List<InlineSpan> _convert(List<hl.Node> nodes, Map<String, TextStyle> theme) {
+    List<InlineSpan> spans = [];
+    for (var node in nodes) {
+      if (node.value != null) {
+        spans.add(TextSpan(text: node.value));
+      } else if (node.children != null) {
+        spans.add(
+          TextSpan(
+            style: theme[node.className],
+            children: _convert(node.children!, theme),
+          ),
+        );
+      }
+    }
+    return spans;
   }
 }
